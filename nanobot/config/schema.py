@@ -138,7 +138,8 @@ class ApiConfig(Base):
 
     host: str = "127.0.0.1"  # Safer default: local-only bind.
     port: int = 8900
-    timeout: float = 120.0  # Per-request timeout in seconds.
+    # 整次对话（多轮工具 + LLM）的上限；UAV fly_to 等单步就可能接近 120s，默认过短易 504。
+    timeout: float = 600.0  # Per-request timeout in seconds.
 
 
 class GatewayConfig(Base):

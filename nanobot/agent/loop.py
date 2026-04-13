@@ -25,6 +25,14 @@ from nanobot.agent.tools.registry import ToolRegistry
 from nanobot.agent.tools.search import GlobTool, GrepTool
 from nanobot.agent.tools.shell import ExecTool
 from nanobot.agent.tools.spawn import SpawnTool
+from nanobot.agent.tools.uav import (
+    AnalyzeSceneTool,
+    CaptureImageTool,
+    FlyToTool,
+    GenerateReportTool,
+    GetDroneStateTool,
+    GetPositionTool,
+)
 from nanobot.agent.tools.web import WebFetchTool, WebSearchTool
 from nanobot.bus.events import InboundMessage, OutboundMessage
 from nanobot.command import CommandContext, CommandRouter, register_builtin_commands
@@ -285,6 +293,15 @@ class AgentLoop:
             self.tools.register(
                 CronTool(self.cron_service, default_timezone=self.context.timezone or "UTC")
             )
+
+        uav_bridge = os.environ.get("UAV_BRIDGE_URL")
+        if uav_bridge:
+            ws = self.workspace
+            for cls in (FlyToTool, GetPositionTool, GetDroneStateTool, CaptureImageTool):
+                self.tools.register(cls(bridge_url=uav_bridge))
+            self.tools.register(AnalyzeSceneTool(workspace=ws, bridge_url=uav_bridge))
+            self.tools.register(GenerateReportTool(workspace=ws, bridge_url=uav_bridge))
+            logger.info("UAV tools registered (bridge: {})", uav_bridge)
 
     async def _connect_mcp(self) -> None:
         """Connect to configured MCP servers (one-time, lazy)."""

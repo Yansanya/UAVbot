@@ -172,6 +172,23 @@ async def handle_health(request: web.Request) -> web.Response:
 
 
 # ---------------------------------------------------------------------------
+# CORS (browser Chat UIs load from another origin / port)
+# ---------------------------------------------------------------------------
+
+@web.middleware
+async def _cors_middleware(request: web.Request, handler):
+    if request.method == "OPTIONS":
+        resp = web.Response()
+    else:
+        resp = await handler(request)
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    resp.headers["Access-Control-Max-Age"] = "86400"
+    return resp
+
+
+# ---------------------------------------------------------------------------
 # App factory
 # ---------------------------------------------------------------------------
 
@@ -183,7 +200,7 @@ def create_app(agent_loop, model_name: str = "nanobot", request_timeout: float =
         model_name: Model name reported in responses.
         request_timeout: Per-request timeout in seconds.
     """
-    app = web.Application()
+    app = web.Application(middlewares=[_cors_middleware])
     app["agent_loop"] = agent_loop
     app["model_name"] = model_name
     app["request_timeout"] = request_timeout

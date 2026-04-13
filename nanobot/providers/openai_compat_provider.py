@@ -143,11 +143,15 @@ class OpenAICompatProvider(LLMProvider):
         if extra_headers:
             default_headers.update(extra_headers)
 
+        # 单次 HTTP 读超时（秒）。火山等网关首包/流式较慢时，默认过短会报 Request timed out。
+        _http_timeout_s = float(os.environ.get("NANOBOT_LLM_HTTP_TIMEOUT_S", "600"))
+
         self._client = AsyncOpenAI(
             api_key=api_key or "no-key",
             base_url=effective_base,
             default_headers=default_headers,
             max_retries=0,
+            timeout=_http_timeout_s,
         )
 
     def _setup_env(self, api_key: str, api_base: str | None) -> None:
@@ -698,6 +702,18 @@ class OpenAICompatProvider(LLMProvider):
         }
 
     @staticmethod
+    def _chain_exception_detail(e: Exception) -> str:
+        """Append __cause__ so generic 'Connection error' shows DNS/SSL/refused details."""
+        parts: list[str] = [str(e)]
+        cur: BaseException | None = getattr(e, "__cause__", None)
+        for _ in range(4):
+            if cur is None:
+                break
+            parts.append(str(cur))
+            cur = getattr(cur, "__cause__", None)
+        return " — ".join(parts) if len(parts) > 1 else parts[0]
+
+    @staticmethod
     def _handle_error(e: Exception) -> LLMResponse:
         body = (
             getattr(e, "doc", None)
@@ -705,7 +721,10 @@ class OpenAICompatProvider(LLMProvider):
             or getattr(getattr(e, "response", None), "text", None)
         )
         body_text = body if isinstance(body, str) else str(body) if body is not None else ""
-        msg = f"Error: {body_text.strip()[:500]}" if body_text.strip() else f"Error calling LLM: {e}"
+        if body_text.strip():
+            msg = f"Error: {body_text.strip()[:500]}"
+        else:
+            msg = f"Error calling LLM: {OpenAICompatProvider._chain_exception_detail(e)}"
         response = getattr(e, "response", None)
         retry_after = LLMProvider._extract_retry_after_from_headers(getattr(response, "headers", None))
         if retry_after is None:
