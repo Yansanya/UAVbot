@@ -1,5 +1,5 @@
 """
-Entry point for running nanobot as a module: python -m nanobot
+Entry point for running the CLI as a module: ``python -m nanobot`` (same as ``uavbot`` / ``nanobot``).
 """
 
 from nanobot.cli.commands import app

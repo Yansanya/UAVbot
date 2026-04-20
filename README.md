@@ -189,26 +189,28 @@ pip install nanobot-ai
 
 ```bash
 pip install -U nanobot-ai
-nanobot --version
+uavbot --version
 ```
 
 **uv**
 
 ```bash
 uv tool upgrade nanobot-ai
-nanobot --version
+uavbot --version
 ```
 
 **Using WhatsApp?** Rebuild the local bridge after upgrading:
 
 ```bash
 rm -rf ~/.nanobot/bridge
-nanobot channels login whatsapp
+uavbot channels login whatsapp
 ```
 
 ## 🚀 Quick Start
 
 > [!TIP]
+> **This fork installs the `uavbot` command** (and keeps `nanobot` as an alias). Use `uavbot onboard`, `uavbot agent`, etc.
+>
 > Set your API key in `~/.nanobot/config.json`.
 > Get API keys: [OpenRouter](https://openrouter.ai/keys) (Global)
 >
@@ -219,10 +221,10 @@ nanobot channels login whatsapp
 **1. Initialize**
 
 ```bash
-nanobot onboard
+uavbot onboard
 ```
 
-Use `nanobot onboard --wizard` if you want the interactive setup wizard.
+Use `uavbot onboard --wizard` if you want the interactive setup wizard.
 
 **2. Configure** (`~/.nanobot/config.json`)
 
@@ -254,7 +256,7 @@ Configure these **two parts** in your config (other options have defaults).
 **3. Chat**
 
 ```bash
-nanobot agent
+uavbot agent
 ```
 
 That's it! You have a working AI agent in 2 minutes.

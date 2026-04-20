@@ -84,6 +84,7 @@ dev = [
 ]
 
 [project.scripts]
+uavbot = "nanobot.cli.commands:app"
 nanobot = "nanobot.cli.commands:app"
 
 [build-system]
