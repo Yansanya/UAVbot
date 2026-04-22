@@ -100,6 +100,35 @@ header .subtitle {
 
 .settings-bar input:focus { outline: none; border-color: var(--accent); }
 
+.monitor-panel {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.monitor-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.monitor-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.monitor-value {
+  font-size: 13px;
+  color: var(--text);
+  font-family: 'Fira Code', 'Consolas', monospace;
+  word-break: break-word;
+}
+
 #chat-area {
   flex: 1;
   overflow-y: auto;
@@ -309,7 +338,28 @@ header .subtitle {
 <div class="settings-bar">
   <label>API:</label>
   <input id="api-url" value="http://127.0.0.1:8900" style="width:220px" />
+  <label>Bridge:</label>
+  <input id="bridge-url" value="http://127.0.0.1:8765" style="width:220px" />
   <button onclick="checkHealth()" style="background:var(--accent);border:none;color:white;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px">连接</button>
+</div>
+
+<div class="monitor-panel">
+  <div class="monitor-card">
+    <div class="monitor-label">桥接状态</div>
+    <div class="monitor-value" id="bridge-status">UNKNOWN</div>
+  </div>
+  <div class="monitor-card">
+    <div class="monitor-label">位置 (x, y, z)</div>
+    <div class="monitor-value" id="position-value">--, --, --</div>
+  </div>
+  <div class="monitor-card">
+    <div class="monitor-label">姿态 yaw(rad)</div>
+    <div class="monitor-value" id="yaw-value">--</div>
+  </div>
+  <div class="monitor-card">
+    <div class="monitor-label">规划器 FSM</div>
+    <div class="monitor-value" id="fsm-value">--</div>
+  </div>
 </div>
 
 <div id="chat-area">
@@ -343,8 +393,13 @@ const chatArea = document.getElementById('chat-area');
 const msgInput = document.getElementById('msg-input');
 const sendBtn = document.getElementById('send-btn');
 const apiUrlInput = document.getElementById('api-url');
+const bridgeUrlInput = document.getElementById('bridge-url');
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
+const bridgeStatusEl = document.getElementById('bridge-status');
+const positionEl = document.getElementById('position-value');
+const yawEl = document.getElementById('yaw-value');
+const fsmEl = document.getElementById('fsm-value');
 
 let messages = [];
 let streaming = false;
@@ -491,8 +546,60 @@ async function checkHealth() {
   }
 }
 
+async function updateDroneMonitor() {
+  const bridgeUrl = bridgeUrlInput.value.replace(/\/$/, '');
+  try {
+    const [stateResp, posResp] = await Promise.all([
+      fetch(`${bridgeUrl}/state`, { signal: _fetchTimeoutSignal(4000) }),
+      fetch(`${bridgeUrl}/position`, { signal: _fetchTimeoutSignal(4000) }),
+    ]);
+    if (!stateResp.ok || !posResp.ok) throw new Error(`bridge_http_${stateResp.status}/${posResp.status}`);
+
+    const state = await stateResp.json();
+    const pos = await posResp.json();
+
+    const status = state.status || 'UNKNOWN';
+    bridgeStatusEl.textContent = `${status}${state.goal_active ? ' (goal_active)' : ''}`;
+    if (typeof state.distance_m === 'number') {
+      bridgeStatusEl.textContent += ` d=${state.distance_m.toFixed(2)}m`;
+    }
+
+    if (pos.has_odom) {
+      positionEl.textContent = `${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}`;
+      yawEl.textContent = Number(pos.yaw).toFixed(3);
+    } else {
+      positionEl.textContent = 'NO_ODOM';
+      yawEl.textContent = '--';
+    }
+
+    const fsm = state.ego_planner?.fsm || '--';
+    const fsmFlags = state.ego_planner
+      ? ` odom:${state.ego_planner.have_odom ? 1 : 0} target:${state.ego_planner.have_target ? 1 : 0}`
+      : '';
+    fsmEl.textContent = `${fsm}${fsmFlags}`;
+  } catch (e) {
+    bridgeStatusEl.textContent = 'BRIDGE_OFFLINE';
+    positionEl.textContent = '--, --, --';
+    yawEl.textContent = '--';
+    fsmEl.textContent = '--';
+  }
+}
+
+function initDefaultUrls() {
+  const host = window.location.hostname || '127.0.0.1';
+  if (apiUrlInput.value.includes('127.0.0.1')) {
+    apiUrlInput.value = `http://${host}:8900`;
+  }
+  if (bridgeUrlInput.value.includes('127.0.0.1')) {
+    bridgeUrlInput.value = `http://${host}:8765`;
+  }
+}
+
+initDefaultUrls();
 checkHealth();
+updateDroneMonitor();
 setInterval(checkHealth, 10000);
+setInterval(updateDroneMonitor, 1000);
 </script>
 </body>
 </html>
