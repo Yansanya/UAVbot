@@ -294,14 +294,26 @@ class AgentLoop:
                 CronTool(self.cron_service, default_timezone=self.context.timezone or "UTC")
             )
 
-        # !: UAV tools (bridge URL: env UAV_BRIDGE_URL overrides default)
+        # !: UAV tools
         uav_bridge = os.environ.get("UAV_BRIDGE_URL", "http://localhost:8765")
+        uav_airsim_service = os.environ.get("UAV_AIRSIM_SERVICE_URL", "http://localhost:8790")
         ws = self.workspace
-        for cls in (FlyToTool, GetPositionTool, GetDroneStateTool, CaptureImageTool):
-            self.tools.register(cls(bridge_url=uav_bridge))
-        self.tools.register(AnalyzeSceneTool(workspace=ws, bridge_url=uav_bridge))
+        self.tools.register(FlyToTool(bridge_url=uav_bridge))
+        for cls in (GetPositionTool, GetDroneStateTool, CaptureImageTool):
+            self.tools.register(cls(bridge_url=uav_bridge, airsim_service_url=uav_airsim_service))
+        self.tools.register(
+            AnalyzeSceneTool(
+                workspace=ws,
+                bridge_url=uav_bridge,
+                airsim_service_url=uav_airsim_service,
+            )
+        )
         self.tools.register(GenerateReportTool(workspace=ws, bridge_url=uav_bridge))
-        logger.info("UAV tools registered (bridge: {})", uav_bridge)
+        logger.info(
+            "UAV tools registered (bridge: {}, airsim_service: {})",
+            uav_bridge,
+            uav_airsim_service,
+        )
 
     async def _connect_mcp(self) -> None:
         """Connect to configured MCP servers (one-time, lazy)."""

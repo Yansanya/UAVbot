@@ -145,9 +145,15 @@ class GetPositionTool(Tool):
     name = "get_position"
     description = "Return the drone's current position (x, y, z, yaw) in the ENU world frame."
 
-    def __init__(self, bridge_url: str | None = None):
+    def __init__(
+        self,
+        bridge_url: str | None = None,
+        airsim_service_url: str | None = None,
+    ):
         if bridge_url:
             os.environ.setdefault("UAV_BRIDGE_URL", bridge_url)
+        if airsim_service_url:
+            os.environ.setdefault("UAV_AIRSIM_SERVICE_URL", airsim_service_url)
 
     @property
     def read_only(self) -> bool:
@@ -177,9 +183,15 @@ class GetDroneStateTool(Tool):
         "Return the drone's current state from AirSim service: status, speed_mps, and current position (x, y, z, yaw)."
     )
 
-    def __init__(self, bridge_url: str | None = None):
+    def __init__(
+        self,
+        bridge_url: str | None = None,
+        airsim_service_url: str | None = None,
+    ):
         if bridge_url:
             os.environ.setdefault("UAV_BRIDGE_URL", bridge_url)
+        if airsim_service_url:
+            os.environ.setdefault("UAV_AIRSIM_SERVICE_URL", airsim_service_url)
 
     @property
     def read_only(self) -> bool:
@@ -232,10 +244,17 @@ class CaptureImageTool(Tool):
         "Returns the saved file path. The image can then be analyzed with analyze_scene."
     )
 
-    def __init__(self, workspace: Path | None = None, bridge_url: str | None = None):
+    def __init__(
+        self,
+        workspace: Path | None = None,
+        bridge_url: str | None = None,
+        airsim_service_url: str | None = None,
+    ):
         self._workspace = workspace or Path(os.environ.get("NANOBOT_WORKSPACE", "~/.nanobot/workspace")).expanduser()
         if bridge_url:
             os.environ.setdefault("UAV_BRIDGE_URL", bridge_url)
+        if airsim_service_url:
+            os.environ.setdefault("UAV_AIRSIM_SERVICE_URL", airsim_service_url)
 
     async def execute(self, filename: str | None = None, **kwargs: Any) -> str:
         try:
@@ -278,10 +297,17 @@ class AnalyzeSceneTool(Tool):
         "Returns a text description of what the camera sees."
     )
 
-    def __init__(self, workspace: Path | None = None, bridge_url: str | None = None):
-        self._workspace = workspace or Path(os.environ.get("NANOBOT_WORKSPACE", "~/.nanobot/workspace")).expanduser()
+    def __init__(
+        self,
+        workspace: Path | None = None,
+        bridge_url: str | None = None,
+        airsim_service_url: str | None = None,
+    ):
+        self._workspace = workspace or Path(os.environ.get("NANOBOT_WORKSPACE", "/media/tongji/data/uavbot/workspace")).expanduser()
         if bridge_url:
             os.environ.setdefault("UAV_BRIDGE_URL", bridge_url)
+        if airsim_service_url:
+            os.environ.setdefault("UAV_AIRSIM_SERVICE_URL", airsim_service_url)
 
     async def execute(self, prompt: str | None = None, **kwargs: Any) -> Any:
         try:
