@@ -294,8 +294,8 @@ class AgentLoop:
                 CronTool(self.cron_service, default_timezone=self.context.timezone or "UTC")
             )
 
-        # !: UAV tools
-        uav_bridge = "http://localhost:8765"
+        # !: UAV tools (bridge URL: env UAV_BRIDGE_URL overrides default)
+        uav_bridge = os.environ.get("UAV_BRIDGE_URL", "http://localhost:8765")
         ws = self.workspace
         for cls in (FlyToTool, GetPositionTool, GetDroneStateTool, CaptureImageTool):
             self.tools.register(cls(bridge_url=uav_bridge))

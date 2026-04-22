@@ -36,6 +36,8 @@ dependencies = [
     "lark-oapi>=1.5.0,<2.0.0",
     "socksio>=1.0.0,<2.0.0",
     "python-socketio>=5.16.0,<6.0.0",
+    # engineio 会尝试导入 tornado；旧版 tornado 在 Python 3.12 使用已移除的 collections.MutableMapping
+    "tornado>=6.4.0,<7.0.0",
     "msgpack>=1.1.0,<2.0.0",
     "slack-sdk>=3.39.0,<4.0.0",
     "slackify-markdown>=0.2.0,<1.0.0",

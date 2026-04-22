@@ -1,605 +1,1043 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UAVbot - 无人机智能巡检</title>
-<style>
-:root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #252833;
-  --border: #2d3140;
-  --text: #e4e4e7;
-  --text-muted: #8b8fa3;
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --user-bg: #1e3a5f;
-  --bot-bg: #1e2433;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --error: #ef4444;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UAVbot - 无人机智能巡检</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #252833;
+      --border: #2d3140;
+      --text: #e4e4e7;
+      --text-muted: #8b8fa3;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --user-bg: #1e3a5f;
+      --bot-bg: #1e2433;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+    }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-.logo {
-  width: 36px; height: 36px;
-  background: var(--accent);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
 
-header h1 {
-  font-size: 18px;
-  font-weight: 600;
-}
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
 
-header .subtitle {
-  font-size: 12px;
-  color: var(--text-muted);
-}
+    header .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
 
-.status-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--error);
-  display: inline-block;
-}
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--error);
+      display: inline-block;
+    }
 
-.status-dot.connected { background: var(--success); }
+    .status-dot.connected {
+      background: var(--success);
+    }
 
-.settings-bar {
-  background: var(--surface2);
-  border-bottom: 1px solid var(--border);
-  padding: 8px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  flex-shrink: 0;
-}
+    .settings-bar {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
 
-.settings-bar label { color: var(--text-muted); }
-.settings-bar input {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  padding: 4px 8px;
-  font-size: 13px;
-}
+    .settings-bar label {
+      color: var(--text-muted);
+    }
 
-.settings-bar input:focus { outline: none; border-color: var(--accent); }
+    .settings-bar input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 4px 8px;
+      font-size: 13px;
+    }
 
-.monitor-panel {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 20px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 10px;
-}
+    .settings-bar input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
 
-.monitor-card {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-}
+    .monitor-panel {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 10px;
+    }
 
-.monitor-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
+    .monitor-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
 
-.monitor-value {
-  font-size: 13px;
-  color: var(--text);
-  font-family: 'Fira Code', 'Consolas', monospace;
-  word-break: break-word;
-}
+    .monitor-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
 
-#chat-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  scroll-behavior: smooth;
-}
+    .monitor-value {
+      font-size: 13px;
+      color: var(--text);
+      font-family: 'Fira Code', 'Consolas', monospace;
+      word-break: break-word;
+    }
 
-.message {
-  display: flex;
-  gap: 12px;
-  max-width: 85%;
-  animation: fadeIn 0.2s ease;
-}
+    .image-panel {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+    }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+    .image-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
 
-.message.user { align-self: flex-end; flex-direction: row-reverse; }
-.message.assistant { align-self: flex-start; }
+    .image-toolbar button {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
 
-.avatar {
-  width: 32px; height: 32px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
+    .image-box {
+      background: #0d1017;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 170px;
+    }
 
-.message.user .avatar { background: var(--user-bg); }
-.message.assistant .avatar { background: var(--accent); }
+    #live-image {
+      max-width: 100%;
+      max-height: 220px;
+      border-radius: 6px;
+    }
 
-.bubble {
-  padding: 10px 14px;
-  border-radius: 12px;
-  line-height: 1.6;
-  font-size: 14px;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
+    #chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
 
-.message.user .bubble { background: var(--user-bg); border-bottom-right-radius: 4px; }
-.message.assistant .bubble { background: var(--bot-bg); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .message {
+      display: flex;
+      gap: 12px;
+      max-width: 85%;
+      animation: fadeIn 0.2s ease;
+    }
 
-.bubble code {
-  background: rgba(99,102,241,0.15);
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-size: 13px;
-  font-family: 'Fira Code', 'Consolas', monospace;
-}
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
 
-.bubble pre {
-  background: #0d1017;
-  padding: 10px;
-  border-radius: 6px;
-  margin: 8px 0;
-  overflow-x: auto;
-}
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-.bubble pre code { background: none; padding: 0; }
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
 
-.bubble img {
-  max-width: 100%;
-  border-radius: 8px;
-  margin: 8px 0;
-}
+    .message.assistant {
+      align-self: flex-start;
+    }
 
-.tool-call {
-  background: rgba(99,102,241,0.1);
-  border-left: 3px solid var(--accent);
-  padding: 6px 10px;
-  margin: 6px 0;
-  border-radius: 0 6px 6px 0;
-  font-size: 12px;
-  color: var(--text-muted);
-}
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
 
-.tool-call .tool-name { color: var(--accent); font-weight: 600; }
+    .message.user .avatar {
+      background: var(--user-bg);
+    }
 
-.typing-indicator {
-  display: flex;
-  gap: 4px;
-  padding: 4px 0;
-}
+    .message.assistant .avatar {
+      background: var(--accent);
+    }
 
-.typing-indicator span {
-  width: 6px; height: 6px;
-  background: var(--text-muted);
-  border-radius: 50%;
-  animation: typing 1.2s infinite;
-}
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      line-height: 1.6;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
 
-.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    .message.user .bubble {
+      background: var(--user-bg);
+      border-bottom-right-radius: 4px;
+    }
 
-@keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-6px); opacity: 1; }
-}
+    .message.assistant .bubble {
+      background: var(--bot-bg);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
 
-#input-area {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 16px 20px;
-  flex-shrink: 0;
-}
+    .bubble code {
+      background: rgba(99, 102, 241, 0.15);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 13px;
+      font-family: 'Fira Code', 'Consolas', monospace;
+    }
 
-.input-row {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-}
+    .bubble pre {
+      background: #0d1017;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 8px 0;
+      overflow-x: auto;
+    }
 
-#msg-input {
-  flex: 1;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--text);
-  padding: 12px 16px;
-  font-size: 14px;
-  font-family: inherit;
-  resize: none;
-  min-height: 44px;
-  max-height: 160px;
-  line-height: 1.5;
-}
+    .bubble pre code {
+      background: none;
+      padding: 0;
+    }
 
-#msg-input:focus { outline: none; border-color: var(--accent); }
-#msg-input::placeholder { color: var(--text-muted); }
+    .bubble img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 8px 0;
+    }
 
-#send-btn {
-  width: 44px; height: 44px;
-  border-radius: 12px;
-  background: var(--accent);
-  border: none;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
+    .tool-call {
+      background: rgba(99, 102, 241, 0.1);
+      border-left: 3px solid var(--accent);
+      padding: 6px 10px;
+      margin: 6px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
 
-#send-btn:hover { background: var(--accent-hover); }
-#send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .tool-call .tool-name {
+      color: var(--accent);
+      font-weight: 600;
+    }
 
-.quick-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 4px 0;
+    }
 
-.quick-btn {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
+    .typing-indicator span {
+      width: 6px;
+      height: 6px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: typing 1.2s infinite;
+    }
 
-.quick-btn:hover { border-color: var(--accent); color: var(--text); }
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
 
-.welcome {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-muted);
-}
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
 
-.welcome h2 {
-  font-size: 24px;
-  color: var(--text);
-  margin-bottom: 8px;
-}
+    @keyframes typing {
 
-.welcome p { margin-bottom: 20px; }
-</style>
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+
+      30% {
+        transform: translateY(-6px);
+        opacity: 1;
+      }
+    }
+
+    #input-area {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #msg-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      padding: 12px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      min-height: 44px;
+      max-height: 160px;
+      line-height: 1.5;
+    }
+
+    #msg-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    #msg-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    #send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    #send-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    #send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .quick-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .quick-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .welcome {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .welcome h2 {
+      font-size: 24px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .welcome p {
+      margin-bottom: 20px;
+    }
+
+    .settings-bar .ros-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+    }
+
+    .settings-bar .ros-row label {
+      white-space: nowrap;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/roslib@1.3.0/build/roslib.min.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
 
-<header>
-  <div class="header-left">
-    <div class="logo">🚁</div>
-    <div>
-      <h1>UAVbot</h1>
-      <div class="subtitle">无人机智能巡检助手</div>
+  <header>
+    <div class="header-left">
+      <div class="logo">🚁</div>
+      <div>
+        <h1>UAVbot</h1>
+        <div class="subtitle">无人机智能巡检助手</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">未连接</span>
+    </div>
+  </header>
+
+  <div class="settings-bar">
+    <label>API:</label>
+    <input id="api-url" value="http://127.0.0.1:8900" style="width:220px" />
+    <label>Bridge:</label>
+    <input id="bridge-url" value="http://127.0.0.1:8765" style="width:220px" />
+    <label>AirSim Service:</label>
+    <input id="airsim-service-url" value="http://127.0.0.1:8790" style="width:220px" />
+    <button type="button" onclick="onConnectClick()"
+      style="background:var(--accent);border:none;color:white;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px">连接</button>
+    <div class="ros-row">
+      <label><input type="checkbox" id="use-ros-monitor" checked /> ROS 监控</label>
+      <label>rosbridge:</label>
+      <input id="ros-ws-url" value="ws://127.0.0.1:9090" style="width:260px"
+        title="rosbridge WebSocket，例如 ws://192.168.1.131:9090" />
+      <label>odom:</label>
+      <input id="ros-odom-topic" value="/airsim_node/Drone1/odom_local_enu" style="width:220px" />
+      <label>fsm:</label>
+      <input id="ros-fsm-topic" value="/ego_planner/fsm_status" style="width:200px" />
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)">
-    <span class="status-dot" id="status-dot"></span>
-    <span id="status-text">未连接</span>
-  </div>
-</header>
 
-<div class="settings-bar">
-  <label>API:</label>
-  <input id="api-url" value="http://127.0.0.1:8900" style="width:220px" />
-  <label>Bridge:</label>
-  <input id="bridge-url" value="http://127.0.0.1:8765" style="width:220px" />
-  <button onclick="checkHealth()" style="background:var(--accent);border:none;color:white;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px">连接</button>
-</div>
-
-<div class="monitor-panel">
-  <div class="monitor-card">
-    <div class="monitor-label">桥接状态</div>
-    <div class="monitor-value" id="bridge-status">UNKNOWN</div>
-  </div>
-  <div class="monitor-card">
-    <div class="monitor-label">位置 (x, y, z)</div>
-    <div class="monitor-value" id="position-value">--, --, --</div>
-  </div>
-  <div class="monitor-card">
-    <div class="monitor-label">姿态 yaw(rad)</div>
-    <div class="monitor-value" id="yaw-value">--</div>
-  </div>
-  <div class="monitor-card">
-    <div class="monitor-label">规划器 FSM</div>
-    <div class="monitor-value" id="fsm-value">--</div>
-  </div>
-</div>
-
-<div id="chat-area">
-  <div class="welcome">
-    <h2>🚁 UAVbot 无人机智能巡检</h2>
-    <p>通过自然语言控制无人机进行导航、拍照和巡检</p>
-    <div class="quick-actions" style="justify-content:center">
-      <button class="quick-btn" onclick="sendQuick('帮我查看一下当前无人机的位置和状态')">📍 查看状态</button>
-      <button class="quick-btn" onclick="sendQuick('飞到坐标(10, 5, 3)看看那边有什么')">🛫 飞行导航</button>
-      <button class="quick-btn" onclick="sendQuick('拍一张照片看看当前场景')">📸 拍摄照片</button>
-      <button class="quick-btn" onclick="sendQuick('巡检前方30米范围内的区域，生成巡检报告')">📋 自动巡检</button>
+  <div class="monitor-panel">
+    <div class="monitor-card">
+      <div class="monitor-label">数据链路 / 目标</div>
+      <div class="monitor-value" id="bridge-status">UNKNOWN</div>
+    </div>
+    <div class="monitor-card">
+      <div class="monitor-label">位置 (x, y, z)</div>
+      <div class="monitor-value" id="position-value">--, --, --</div>
+    </div>
+    <div class="monitor-card">
+      <div class="monitor-label">姿态 yaw(rad)</div>
+      <div class="monitor-value" id="yaw-value">--</div>
+    </div>
+    <div class="monitor-card">
+      <div class="monitor-label">规划器 FSM</div>
+      <div class="monitor-value" id="fsm-value">--</div>
     </div>
   </div>
-</div>
 
-<div id="input-area">
-  <div class="input-row">
-    <textarea id="msg-input" rows="1" placeholder="输入指令... (例如: 飞到坐标20,10,5)" onkeydown="handleKey(event)"></textarea>
-    <button id="send-btn" onclick="sendMessage()">➤</button>
+  <div class="image-panel">
+    <div class="image-toolbar">
+      <span>当前图像</span>
+      <button type="button" onclick="refreshLiveImage()">刷新图像</button>
+      <label><input type="checkbox" id="auto-image-refresh" checked /> 自动刷新</label>
+      <span id="image-meta">--</span>
+    </div>
+    <div class="image-box">
+      <img id="live-image" alt="live capture" />
+    </div>
   </div>
-  <div class="quick-actions">
-    <button class="quick-btn" onclick="sendQuick('获取当前位置')">📍 位置</button>
-    <button class="quick-btn" onclick="sendQuick('获取无人机状态')">📊 状态</button>
-    <button class="quick-btn" onclick="sendQuick('拍照分析场景')">📷 拍照</button>
-    <button class="quick-btn" onclick="sendQuick('生成巡检报告')">📄 报告</button>
+
+  <div id="chat-area">
+    <div class="welcome">
+      <h2>🚁 UAVbot 无人机智能巡检</h2>
+      <p>通过自然语言控制无人机进行导航、拍照和巡检</p>
+      <div class="quick-actions" style="justify-content:center">
+        <button class="quick-btn" onclick="sendQuick('帮我查看一下当前无人机的位置和状态')">📍 查看状态</button>
+        <button class="quick-btn" onclick="sendQuick('飞到坐标(10, 5, 3)看看那边有什么')">🛫 飞行导航</button>
+        <button class="quick-btn" onclick="sendQuick('拍一张照片看看当前场景')">📸 拍摄照片</button>
+        <button class="quick-btn" onclick="sendQuick('巡检前方30米范围内的区域，生成巡检报告')">📋 自动巡检</button>
+      </div>
+    </div>
   </div>
-</div>
 
-<script>
-const chatArea = document.getElementById('chat-area');
-const msgInput = document.getElementById('msg-input');
-const sendBtn = document.getElementById('send-btn');
-const apiUrlInput = document.getElementById('api-url');
-const bridgeUrlInput = document.getElementById('bridge-url');
-const statusDot = document.getElementById('status-dot');
-const statusText = document.getElementById('status-text');
-const bridgeStatusEl = document.getElementById('bridge-status');
-const positionEl = document.getElementById('position-value');
-const yawEl = document.getElementById('yaw-value');
-const fsmEl = document.getElementById('fsm-value');
+  <div id="input-area">
+    <div class="input-row">
+      <textarea id="msg-input" rows="1" placeholder="输入指令... (例如: 飞到坐标20,10,5)" onkeydown="handleKey(event)"></textarea>
+      <button id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="sendQuick('获取当前位置')">📍 位置</button>
+      <button class="quick-btn" onclick="sendQuick('获取无人机状态')">📊 状态</button>
+      <button class="quick-btn" onclick="sendQuick('拍照分析场景')">📷 拍照</button>
+      <button class="quick-btn" onclick="sendQuick('生成巡检报告')">📄 报告</button>
+    </div>
+  </div>
 
-let messages = [];
-let streaming = false;
+  <script>
+    const chatArea = document.getElementById('chat-area');
+    const msgInput = document.getElementById('msg-input');
+    const sendBtn = document.getElementById('send-btn');
+    const apiUrlInput = document.getElementById('api-url');
+    const bridgeUrlInput = document.getElementById('bridge-url');
+    const airsimServiceUrlInput = document.getElementById('airsim-service-url');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const bridgeStatusEl = document.getElementById('bridge-status');
+    const positionEl = document.getElementById('position-value');
+    const yawEl = document.getElementById('yaw-value');
+    const fsmEl = document.getElementById('fsm-value');
+    const useRosMonitorEl = document.getElementById('use-ros-monitor');
+    const rosWsUrlInput = document.getElementById('ros-ws-url');
+    const rosOdomTopicInput = document.getElementById('ros-odom-topic');
+    const rosFsmTopicInput = document.getElementById('ros-fsm-topic');
+    const liveImageEl = document.getElementById('live-image');
+    const imageMetaEl = document.getElementById('image-meta');
+    const autoImageRefreshEl = document.getElementById('auto-image-refresh');
 
-msgInput.addEventListener('input', () => {
-  msgInput.style.height = 'auto';
-  msgInput.style.height = Math.min(msgInput.scrollHeight, 160) + 'px';
-});
+    let messages = [];
+    let streaming = false;
+    let monitorInFlight = false;
+    let monitorFailCount = 0;
+    const MONITOR_FAIL_THRESHOLD = 3;
 
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-}
+    let ros = null;
+    let rosOdomTopic = null;
+    let rosFsmTopic = null;
+    let rosConnected = false;
+    let httpMonitorTimer = null;
+    let rosGoalMergeTimer = null;
+    let rosReconnectTimer = null;
+    /** 为 true 时忽略 ros close（避免重连时误触发 HTTP 回退） */
+    let rosCloseSilent = false;
+    let imageRefreshTimer = null;
+    let imageInFlight = false;
 
-function sendQuick(text) {
-  msgInput.value = text;
-  sendMessage();
-}
+    function yawFromQuat(q) {
+      if (!q) return 0;
+      const sinyCosp = 2 * (q.w * q.z + q.x * q.y);
+      const cosyCosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+      return Math.atan2(sinyCosp, cosyCosp);
+    }
 
-function addMessage(role, content) {
-  const welcome = chatArea.querySelector('.welcome');
-  if (welcome) welcome.remove();
+    function stopHttpMonitor() {
+      if (httpMonitorTimer) {
+        clearInterval(httpMonitorTimer);
+        httpMonitorTimer = null;
+      }
+    }
 
-  const div = document.createElement('div');
-  div.className = `message ${role}`;
+    function startHttpMonitor() {
+      stopHttpMonitor();
+      httpMonitorTimer = setInterval(updateDroneMonitor, 1500);
+    }
 
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar';
-  avatar.textContent = role === 'user' ? '👤' : '🚁';
+    function stopRosGoalMerge() {
+      if (rosGoalMergeTimer) {
+        clearInterval(rosGoalMergeTimer);
+        rosGoalMergeTimer = null;
+      }
+    }
 
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
+    function stopRosReconnect() {
+      if (rosReconnectTimer) {
+        clearTimeout(rosReconnectTimer);
+        rosReconnectTimer = null;
+      }
+    }
 
-  if (role === 'assistant' && content === null) {
-    bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-    div.id = 'streaming-msg';
-  } else {
-    bubble.innerHTML = renderMarkdown(content);
-  }
+    function scheduleRosReconnect() {
+      if (!useRosMonitorEl.checked || typeof ROSLIB === 'undefined') return;
+      stopRosReconnect();
+      rosReconnectTimer = setTimeout(() => {
+        rosReconnectTimer = null;
+        if (useRosMonitorEl.checked && !rosConnected) connectRos();
+      }, 4000);
+    }
 
-  div.appendChild(avatar);
-  div.appendChild(bubble);
-  chatArea.appendChild(div);
-  chatArea.scrollTop = chatArea.scrollHeight;
-  return bubble;
-}
+    function disconnectRos(options) {
+      const silent = options && options.silent === true;
+      stopRosReconnect();
+      if (rosFsmTopic) {
+        try { rosFsmTopic.unsubscribe(); } catch (e) { /* ignore */ }
+        rosFsmTopic = null;
+      }
+      if (rosOdomTopic) {
+        try { rosOdomTopic.unsubscribe(); } catch (e) { /* ignore */ }
+        rosOdomTopic = null;
+      }
+      if (ros) {
+        rosCloseSilent = silent;
+        try { ros.close(); } catch (e) { /* ignore */ }
+        ros = null;
+      } else {
+        rosCloseSilent = false;
+      }
+      rosConnected = false;
+    }
 
-function renderMarkdown(text) {
-  if (!text) return '';
-  let html = text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
-      `<pre><code>${code}</code></pre>`)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^### (.+)$/gm, '<h4>$1</h4>')
-    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^# (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^- (.+)$/gm, '• $1');
+    function formatBridgeLineFromState(state) {
+      const status = state.status || 'UNKNOWN';
+      let line = `${status}${state.goal_active ? ' (goal_active)' : ''}`;
+      if (typeof state.distance_m === 'number') {
+        line += ` d=${state.distance_m.toFixed(2)}m`;
+      }
+      return line;
+    }
 
-  html = html.replace(/\[tool:(\w+)\((.*?)\)\]/g,
-    '<div class="tool-call">🔧 <span class="tool-name">$1</span>($2)</div>');
+    async function mergeBridgeGoalFromHttp() {
+      const bridgeUrl = bridgeUrlInput.value.replace(/\/$/, '');
+      try {
+        const stateResp = await fetch(`${bridgeUrl}/state`, { signal: _fetchTimeoutSignal(4000) });
+        if (!stateResp.ok) return;
+        const state = await stateResp.json();
+        const prefix = rosConnected ? 'ROS | ' : '';
+        bridgeStatusEl.textContent = prefix + formatBridgeLineFromState(state);
+      } catch (e) {
+        /* keep previous text */
+      }
+    }
 
-  return html;
-}
+    function connectRos() {
+      if (typeof ROSLIB === 'undefined') {
+        bridgeStatusEl.textContent = 'HTTP (roslib 未加载)';
+        startHttpMonitor();
+        return;
+      }
+      disconnectRos({ silent: true });
+      const wsUrl = rosWsUrlInput.value.trim();
+      if (!wsUrl) {
+        startHttpMonitor();
+        return;
+      }
+      ros = new ROSLIB.Ros({ url: wsUrl });
 
-async function sendMessage() {
-  const text = msgInput.value.trim();
-  if (!text || streaming) return;
+      ros.on('connection', () => {
+        rosConnected = true;
+        monitorFailCount = 0;
+        stopRosReconnect();
+        stopHttpMonitor();
+        bridgeStatusEl.textContent = 'ROS | 已连接';
 
-  addMessage('user', text);
-  messages.push({ role: 'user', content: text });
-  msgInput.value = '';
-  msgInput.style.height = 'auto';
+        const odomName = rosOdomTopicInput.value.trim() || '/odom_world';
+        const fsmName = rosFsmTopicInput.value.trim() || '/ego_planner/fsm_status';
+        rosOdomTopic = new ROSLIB.Topic({
+          ros,
+          name: odomName,
+          messageType: 'nav_msgs/Odometry',
+        });
+        rosOdomTopic.subscribe((msg) => {
+          try {
+            const p = msg.pose.pose.position;
+            const q = msg.pose.pose.orientation;
+            positionEl.textContent = `${Number(p.x).toFixed(2)}, ${Number(p.y).toFixed(2)}, ${Number(p.z).toFixed(2)}`;
+            yawEl.textContent = yawFromQuat(q).toFixed(3);
+          } catch (e) { /* ignore */ }
+        });
 
-  streaming = true;
-  sendBtn.disabled = true;
-  const bubble = addMessage('assistant', null);
+        rosFsmTopic = new ROSLIB.Topic({
+          ros,
+          name: fsmName,
+          messageType: 'std_msgs/String',
+        });
+        rosFsmTopic.subscribe((msg) => {
+          try {
+            const raw = (msg.data || '').trim();
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            const fsm = data.fsm || '--';
+            const flags = ` odom:${data.have_odom ? 1 : 0} target:${data.have_target ? 1 : 0}`;
+            fsmEl.textContent = `${fsm}${flags}`;
+          } catch (e) { /* ignore */ }
+        });
 
-  try {
-    const apiUrl = apiUrlInput.value.replace(/\/$/, '');
-    // API 只接受单条 user 消息；会话历史在服务端 session (api:default) 中保留
-    const resp = await fetch(`${apiUrl}/v1/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [{ role: 'user', content: text }],
-        stream: false,
-      }),
+        stopRosGoalMerge();
+        mergeBridgeGoalFromHttp();
+        rosGoalMergeTimer = setInterval(mergeBridgeGoalFromHttp, 3000);
+        setImageRefreshMode();
+      });
+
+      ros.on('error', () => {
+        if (!rosConnected) {
+          bridgeStatusEl.textContent = 'ROS 连接失败，回退 HTTP';
+        }
+      });
+
+      ros.on('close', () => {
+        const silent = rosCloseSilent;
+        rosCloseSilent = false;
+        rosConnected = false;
+        if (rosFsmTopic) { try { rosFsmTopic.unsubscribe(); } catch (e) { /* */ } rosFsmTopic = null; }
+        if (rosOdomTopic) { try { rosOdomTopic.unsubscribe(); } catch (e) { /* */ } rosOdomTopic = null; }
+        ros = null;
+        stopRosGoalMerge();
+        setImageRefreshMode();
+        if (silent) return;
+        if (useRosMonitorEl.checked) {
+          bridgeStatusEl.textContent = 'ROS 断开，HTTP 轮询中';
+          startHttpMonitor();
+          scheduleRosReconnect();
+        } else {
+          startHttpMonitor();
+        }
+      });
+    }
+
+    function applyMonitorMode() {
+      stopHttpMonitor();
+      stopRosGoalMerge();
+      disconnectRos({ silent: true });
+      if (!useRosMonitorEl.checked) {
+        bridgeStatusEl.textContent = 'HTTP 轮询';
+        startHttpMonitor();
+        updateDroneMonitor();
+        return;
+      }
+      if (typeof ROSLIB === 'undefined') {
+        bridgeStatusEl.textContent = 'HTTP (roslib 未加载)';
+        startHttpMonitor();
+        updateDroneMonitor();
+        return;
+      }
+      connectRos();
+    }
+
+    function onConnectClick() {
+      checkHealth();
+      applyMonitorMode();
+      refreshLiveImage();
+    }
+
+    async function refreshLiveImage() {
+      if (imageInFlight) return;
+      imageInFlight = true;
+      const serviceUrl = airsimServiceUrlInput.value.replace(/\/$/, '');
+      try {
+        const resp = await fetch(`${serviceUrl}/capture`, { signal: _fetchTimeoutSignal(6000) });
+        if (!resp.ok) throw new Error(`capture_http_${resp.status}`);
+        const data = await resp.json();
+        if (!data.ok || !data.image_base64) throw new Error(data.error || 'capture_failed');
+        liveImageEl.src = `data:image/png;base64,${data.image_base64}`;
+        const ts = new Date().toLocaleTimeString();
+        imageMetaEl.textContent = `${data.width || 0}x${data.height || 0} @ ${ts}`;
+      } catch (e) {
+        imageMetaEl.textContent = `图像不可用: ${e.message || e}`;
+      } finally {
+        imageInFlight = false;
+      }
+    }
+
+    function setImageRefreshMode() {
+      if (imageRefreshTimer) {
+        clearInterval(imageRefreshTimer);
+        imageRefreshTimer = null;
+      }
+      if (autoImageRefreshEl.checked) {
+        imageRefreshTimer = setInterval(refreshLiveImage, 2000);
+      }
+    }
+
+    msgInput.addEventListener('input', () => {
+      msgInput.style.height = 'auto';
+      msgInput.style.height = Math.min(msgInput.scrollHeight, 160) + 'px';
     });
 
-    if (!resp.ok) {
-      const err = await resp.text();
-      bubble.innerHTML = renderMarkdown(`**Error ${resp.status}**: ${err}`);
-      return;
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     }
 
-    const data = await resp.json();
-    const fullContent = data.choices?.[0]?.message?.content || '';
-
-    if (fullContent) {
-      bubble.innerHTML = renderMarkdown(fullContent);
-      messages.push({ role: 'assistant', content: fullContent });
-    } else {
-      bubble.innerHTML = '<em style="color:var(--text-muted)">（无响应内容）</em>';
-    }
-  } catch (err) {
-    bubble.innerHTML = renderMarkdown(`**连接失败**: ${err.message}\n\n请确认 nanobot serve 正在运行。`);
-  } finally {
-    streaming = false;
-    sendBtn.disabled = false;
-    const el = document.getElementById('streaming-msg');
-    if (el) el.removeAttribute('id');
-    chatArea.scrollTop = chatArea.scrollHeight;
-  }
-}
-
-function _fetchTimeoutSignal(ms) {
-  if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
-    return AbortSignal.timeout(ms);
-  }
-  const c = new AbortController();
-  setTimeout(() => c.abort(), ms);
-  return c.signal;
-}
-
-async function checkHealth() {
-  const apiUrl = apiUrlInput.value.replace(/\/$/, '');
-  try {
-    const resp = await fetch(`${apiUrl}/health`, { signal: _fetchTimeoutSignal(5000) });
-    if (resp.ok) {
-      statusDot.classList.add('connected');
-      statusText.textContent = '已连接';
-    } else {
-      statusDot.classList.remove('connected');
-      statusText.textContent = `错误 ${resp.status}`;
-    }
-  } catch (e) {
-    statusDot.classList.remove('connected');
-    statusText.textContent = '未连接';
-  }
-}
-
-async function updateDroneMonitor() {
-  const bridgeUrl = bridgeUrlInput.value.replace(/\/$/, '');
-  try {
-    const [stateResp, posResp] = await Promise.all([
-      fetch(`${bridgeUrl}/state`, { signal: _fetchTimeoutSignal(4000) }),
-      fetch(`${bridgeUrl}/position`, { signal: _fetchTimeoutSignal(4000) }),
-    ]);
-    if (!stateResp.ok || !posResp.ok) throw new Error(`bridge_http_${stateResp.status}/${posResp.status}`);
-
-    const state = await stateResp.json();
-    const pos = await posResp.json();
-
-    const status = state.status || 'UNKNOWN';
-    bridgeStatusEl.textContent = `${status}${state.goal_active ? ' (goal_active)' : ''}`;
-    if (typeof state.distance_m === 'number') {
-      bridgeStatusEl.textContent += ` d=${state.distance_m.toFixed(2)}m`;
+    function sendQuick(text) {
+      msgInput.value = text;
+      sendMessage();
     }
 
-    if (pos.has_odom) {
-      positionEl.textContent = `${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}`;
-      yawEl.textContent = Number(pos.yaw).toFixed(3);
-    } else {
-      positionEl.textContent = 'NO_ODOM';
-      yawEl.textContent = '--';
+    function addMessage(role, content) {
+      const welcome = chatArea.querySelector('.welcome');
+      if (welcome) welcome.remove();
+
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = role === 'user' ? '👤' : '🚁';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      if (role === 'assistant' && content === null) {
+        bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+        div.id = 'streaming-msg';
+      } else {
+        bubble.innerHTML = renderMarkdown(content);
+      }
+
+      div.appendChild(avatar);
+      div.appendChild(bubble);
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      return bubble;
     }
 
-    const fsm = state.ego_planner?.fsm || '--';
-    const fsmFlags = state.ego_planner
-      ? ` odom:${state.ego_planner.have_odom ? 1 : 0} target:${state.ego_planner.have_target ? 1 : 0}`
-      : '';
-    fsmEl.textContent = `${fsm}${fsmFlags}`;
-  } catch (e) {
-    bridgeStatusEl.textContent = 'BRIDGE_OFFLINE';
-    positionEl.textContent = '--, --, --';
-    yawEl.textContent = '--';
-    fsmEl.textContent = '--';
-  }
-}
+    function renderMarkdown(text) {
+      if (!text) return '';
+      let html = text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+          `<pre><code>${code}</code></pre>`)
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+        .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^- (.+)$/gm, '• $1');
 
-function initDefaultUrls() {
-  const host = window.location.hostname || '127.0.0.1';
-  if (apiUrlInput.value.includes('127.0.0.1')) {
-    apiUrlInput.value = `http://${host}:8900`;
-  }
-  if (bridgeUrlInput.value.includes('127.0.0.1')) {
-    bridgeUrlInput.value = `http://${host}:8765`;
-  }
-}
+      html = html.replace(/\[tool:(\w+)\((.*?)\)\]/g,
+        '<div class="tool-call">🔧 <span class="tool-name">$1</span>($2)</div>');
 
-initDefaultUrls();
-checkHealth();
-updateDroneMonitor();
-setInterval(checkHealth, 10000);
-setInterval(updateDroneMonitor, 1000);
-</script>
+      return html;
+    }
+
+    async function sendMessage() {
+      const text = msgInput.value.trim();
+      if (!text || streaming) return;
+
+      addMessage('user', text);
+      messages.push({ role: 'user', content: text });
+      msgInput.value = '';
+      msgInput.style.height = 'auto';
+
+      streaming = true;
+      sendBtn.disabled = true;
+      const bubble = addMessage('assistant', null);
+
+      try {
+        const apiUrl = apiUrlInput.value.replace(/\/$/, '');
+        // API 只接受单条 user 消息；会话历史在服务端 session (api:default) 中保留
+        const resp = await fetch(`${apiUrl}/v1/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: text }],
+            stream: false,
+          }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.text();
+          bubble.innerHTML = renderMarkdown(`**Error ${resp.status}**: ${err}`);
+          return;
+        }
+
+        const data = await resp.json();
+        const fullContent = data.choices?.[0]?.message?.content || '';
+
+        if (fullContent) {
+          bubble.innerHTML = renderMarkdown(fullContent);
+          messages.push({ role: 'assistant', content: fullContent });
+        } else {
+          bubble.innerHTML = '<em style="color:var(--text-muted)">（无响应内容）</em>';
+        }
+      } catch (err) {
+        bubble.innerHTML = renderMarkdown(`**连接失败**: ${err.message}\n\n请确认 nanobot serve 正在运行。`);
+      } finally {
+        streaming = false;
+        sendBtn.disabled = false;
+        const el = document.getElementById('streaming-msg');
+        if (el) el.removeAttribute('id');
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+    }
+
+    function _fetchTimeoutSignal(ms) {
+      if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+        return AbortSignal.timeout(ms);
+      }
+      const c = new AbortController();
+      setTimeout(() => c.abort(), ms);
+      return c.signal;
+    }
+
+    async function checkHealth() {
+      const apiUrl = apiUrlInput.value.replace(/\/$/, '');
+      try {
+        const resp = await fetch(`${apiUrl}/health`, { signal: _fetchTimeoutSignal(5000) });
+        if (resp.ok) {
+          statusDot.classList.add('connected');
+          statusText.textContent = '已连接';
+        } else {
+          statusDot.classList.remove('connected');
+          statusText.textContent = `错误 ${resp.status}`;
+        }
+      } catch (e) {
+        statusDot.classList.remove('connected');
+        statusText.textContent = '未连接';
+      }
+    }
+
+    async function updateDroneMonitor() {
+      if (rosConnected) return;
+      if (monitorInFlight) return;
+      monitorInFlight = true;
+      const bridgeUrl = bridgeUrlInput.value.replace(/\/$/, '');
+      try {
+        const [stateResp, posResp] = await Promise.all([
+          fetch(`${bridgeUrl}/state`, { signal: _fetchTimeoutSignal(4000) }),
+          fetch(`${bridgeUrl}/position`, { signal: _fetchTimeoutSignal(4000) }),
+        ]);
+        if (!stateResp.ok || !posResp.ok) throw new Error(`bridge_http_${stateResp.status}/${posResp.status}`);
+
+        const state = await stateResp.json();
+        const pos = await posResp.json();
+
+        bridgeStatusEl.textContent = formatBridgeLineFromState(state);
+
+        if (pos.has_odom) {
+          positionEl.textContent = `${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}`;
+          yawEl.textContent = Number(pos.yaw).toFixed(3);
+        } else {
+          positionEl.textContent = 'NO_ODOM';
+          yawEl.textContent = '--';
+        }
+
+        const fsm = state.ego_planner?.fsm || '--';
+        const fsmFlags = state.ego_planner
+          ? ` odom:${state.ego_planner.have_odom ? 1 : 0} target:${state.ego_planner.have_target ? 1 : 0}`
+          : '';
+        fsmEl.textContent = `${fsm}${fsmFlags}`;
+        monitorFailCount = 0;
+      } catch (e) {
+        monitorFailCount += 1;
+        // Avoid flicker: transient network jitter should not clear the panel.
+        if (monitorFailCount >= MONITOR_FAIL_THRESHOLD) {
+          bridgeStatusEl.textContent = 'BRIDGE_OFFLINE';
+        } else {
+          bridgeStatusEl.textContent = 'RETRYING...';
+        }
+      } finally {
+        monitorInFlight = false;
+      }
+    }
+
+    function initDefaultUrls() {
+      const host = window.location.hostname || '127.0.0.1';
+      if (apiUrlInput.value.includes('127.0.0.1')) {
+        apiUrlInput.value = `http://${host}:8900`;
+      }
+      if (bridgeUrlInput.value.includes('127.0.0.1')) {
+        bridgeUrlInput.value = `http://${host}:8765`;
+      }
+      if (airsimServiceUrlInput.value.includes('127.0.0.1')) {
+        airsimServiceUrlInput.value = `http://${host}:8790`;
+      }
+      if (rosWsUrlInput.value.includes('127.0.0.1')) {
+        rosWsUrlInput.value = `ws://${host}:9090`;
+      }
+    }
+
+    useRosMonitorEl.addEventListener('change', () => applyMonitorMode());
+    rosWsUrlInput.addEventListener('change', () => {
+      if (useRosMonitorEl.checked) applyMonitorMode();
+    });
+    rosOdomTopicInput.addEventListener('change', () => {
+      if (rosConnected) applyMonitorMode();
+    });
+    rosFsmTopicInput.addEventListener('change', () => {
+      if (rosConnected) applyMonitorMode();
+    });
+    airsimServiceUrlInput.addEventListener('change', () => refreshLiveImage());
+    autoImageRefreshEl.addEventListener('change', () => setImageRefreshMode());
+
+    initDefaultUrls();
+    checkHealth();
+    applyMonitorMode();
+    refreshLiveImage();
+    setImageRefreshMode();
+    setInterval(checkHealth, 10000);
+  </script>
 </body>
+
 </html>

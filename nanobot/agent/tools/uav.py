@@ -1,8 +1,7 @@
 """UAV tools: fly_to, get_position, get_drone_state, capture_image, analyze_scene, generate_report.
 
-These tools communicate with the ROS-side UAV Bridge Server via HTTP.
-The bridge URL defaults to http://localhost:8765 and can be overridden
-via the UAV_BRIDGE_URL environment variable.
+`fly_to` uses the ROS-side UAV Bridge Server.
+State/pose/image tools use the AirSim client service.
 """
 
 from __future__ import annotations
@@ -26,11 +25,18 @@ from nanobot.agent.tools.schema import (
 )
 
 DEFAULT_BRIDGE_URL = "http://localhost:8765"
+DEFAULT_AIRSIM_SERVICE_URL = "http://localhost:8790"
 _CAPTURE_DIR = "uav_captures"
 
 
 def _bridge_url() -> str:
+    """Get the bridge URL from the environment or use the default."""
+
     return os.environ.get("UAV_BRIDGE_URL", DEFAULT_BRIDGE_URL)
+
+
+def _airsim_service_url() -> str:
+    return os.environ.get("UAV_AIRSIM_SERVICE_URL", DEFAULT_AIRSIM_SERVICE_URL)
 
 
 async def _get(path: str, timeout: float = 5.0) -> dict[str, Any]:
@@ -45,6 +51,14 @@ async def _post(path: str, body: dict[str, Any], timeout: float = 10.0) -> dict[
     url = f"{_bridge_url()}{path}"
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.post(url, json=body)
+        r.raise_for_status()
+        return r.json()
+
+
+async def _get_airsim(path: str, timeout: float = 3.0) -> dict[str, Any]:
+    url = f"{_airsim_service_url()}{path}"
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        r = await client.get(url)
         r.raise_for_status()
         return r.json()
 
@@ -141,10 +155,11 @@ class GetPositionTool(Tool):
 
     async def execute(self, **kwargs: Any) -> str:
         try:
-            data = await _get("/position")
-            if not data.get("has_odom"):
-                return "No odometry data available yet."
-            return json.dumps(data, ensure_ascii=False)
+            direct = await _get_airsim("/position", timeout=2.5)
+            if not direct.get("ok"):
+                return f"Error: {direct.get('error', 'airsim_position_failed')}"
+            direct.pop("ok", None)
+            return json.dumps(direct, ensure_ascii=False)
         except Exception as e:
             return f"Error: {e}"
 
@@ -159,9 +174,7 @@ class GetDroneStateTool(Tool):
 
     name = "get_drone_state"
     description = (
-        "Return the drone's current state: HTTP bridge status (IDLE/FLYING/ARRIVED/NO_ODOM), "
-        "goal_active, arrived, distance_m when applicable, and ego_planner when available "
-        "(EGO-Planner FSM: fsm, have_odom, have_target, trigger, wait_for_goal from /ego_planner/fsm_status)."
+        "Return the drone's current state from AirSim service: status, speed_mps, and current position (x, y, z, yaw)."
     )
 
     def __init__(self, bridge_url: str | None = None):
@@ -174,10 +187,31 @@ class GetDroneStateTool(Tool):
 
     async def execute(self, **kwargs: Any) -> str:
         try:
-            data = await _get("/state")
-            return json.dumps(data, ensure_ascii=False)
+            s = await _get_airsim("/state", timeout=2.5)
         except Exception as e:
             return f"Error: {e}"
+        try:
+            p = await _get_airsim("/position", timeout=2.5)
+        except Exception as e:
+            return f"Error: {e}"
+
+        if not s.get("ok"):
+            return f"Error: {s.get('error', 'airsim_state_failed')}"
+        if not p.get("ok"):
+            return f"Error: {p.get('error', 'airsim_position_failed')}"
+
+        s.pop("ok", None)
+        p.pop("ok", None)
+        data = {
+            **s,
+            "position": {
+                "x": p["x"],
+                "y": p["y"],
+                "z": p["z"],
+                "yaw": p["yaw"],
+            },
+        }
+        return json.dumps(data, ensure_ascii=False)
 
 
 # ---------------------------------------------------------------------------
@@ -205,7 +239,7 @@ class CaptureImageTool(Tool):
 
     async def execute(self, filename: str | None = None, **kwargs: Any) -> str:
         try:
-            data = await _get("/capture", timeout=10.0)
+            data = await _get_airsim("/capture", timeout=6.0)
         except Exception as e:
             return f"Error capturing image: {e}"
 
@@ -251,7 +285,7 @@ class AnalyzeSceneTool(Tool):
 
     async def execute(self, prompt: str | None = None, **kwargs: Any) -> Any:
         try:
-            data = await _get("/capture", timeout=10.0)
+            data = await _get_airsim("/capture", timeout=6.0)
         except Exception as e:
             return f"Error capturing image: {e}"
 
