@@ -159,8 +159,9 @@ class GetDroneStateTool(Tool):
 
     name = "get_drone_state"
     description = (
-        "Return the drone's current state: status (IDLE/FLYING/HOVERING/ARRIVED/NO_ODOM), "
-        "speed, whether a goal is active, and whether it has arrived."
+        "Return the drone's current state: HTTP bridge status (IDLE/FLYING/ARRIVED/NO_ODOM), "
+        "goal_active, arrived, distance_m when applicable, and ego_planner when available "
+        "(EGO-Planner FSM: fsm, have_odom, have_target, trigger, wait_for_goal from /ego_planner/fsm_status)."
     )
 
     def __init__(self, bridge_url: str | None = None):
